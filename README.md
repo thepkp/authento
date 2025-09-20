@@ -3,6 +3,7 @@
 A digital platform to combat the problem of fake academic degrees and certificates. It provides a secure and scalable system for employers, institutions, and government bodies to verify the authenticity of documents in real-time.
 
 **✨ Key Features**
+
 OCR Data Extraction: Automatically pulls key details from uploaded documents.
 
 Database Verification: Cross-references extracted data against a trusted database to flag mismatches.
@@ -14,6 +15,7 @@ Admin Dashboard: Monitor verification trends, view logs, and manage a blacklist 
 Blockchain Support: Optional hash verification for an added layer of security.
 
 **💻 Tech Stack**
+
 Frontend: ⚛️ React (Vite), Tailwind CSS
 
 Backend: 🌲 Supabase (PostgreSQL, Auth, Storage, Edge Functions)
@@ -25,6 +27,7 @@ Blockchain: ⛓️ Solidity, Polygon (Mumbai Testnet), Ethers.js
 Chatbot: 🤖 Dialogflow / Botpress
 
 **🚀 Core Verification Workflow**
+
 Upload: A user uploads a document via the React Frontend.
 
 Store & Extract: The Backend saves the file to Supabase Storage and triggers the AI/OCR service.
@@ -36,7 +39,9 @@ Verify: The Backend (optionally) verifies the document's hash on the Blockchain.
 Respond: A final verdict (VALID, FORGERY_DETECTED, etc.) is generated and sent back to the Frontend for display.
 
 **👥 Team Roles & Responsibilities**
+
 👤 1. **Team Lead / Backend Integrator**
+
 Key Responsibilities:
 
 Design and build the core backend APIs using Supabase Edge Functions.
@@ -52,6 +57,7 @@ Finalize the database schema and Row Level Security (RLS) policies.
 Build the initial POST /api/verify and POST /api/certificates endpoints.
 
 🎨 2. **Frontend Developer (UI/UX)**
+
 Key Responsibilities:
 
 Develop portals for Students, Employers, and Admins.
@@ -69,6 +75,7 @@ Set up the React project with Vite and Tailwind CSS.
 Build the static UI for the Login and Upload pages.
 
 🧠 3. **AI/OCR Specialist**
+
 Key Responsibilities:
 
 Build a service to extract key details (Name, Roll No, etc.) from documents.
@@ -86,6 +93,7 @@ Create a basic script that takes an image and outputs a JSON object.
 Finalize the JSON output format with the Backend Lead (see API Contracts).
 
 🔗 4. **Blockchain Developer**
+
 Key Responsibilities:
 
 Write and deploy a Solidity smart contract for storing certificate hashes.
@@ -118,6 +126,7 @@ Write initial RLS policies for the certificates table.
 Design the layout for the Admin Dashboard.
 
 🤖 6. **Chatbot + Documentation & Demo Lead**
+
 Key Responsibilities:
 
 Build a chatbot to answer frequently asked questions.
