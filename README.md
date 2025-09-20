@@ -225,9 +225,9 @@ This project is part of Smart India Hackathon 2024 (SIH ID 25029).
 
 ## 📞 Contact
 
-- **Team Lead**: [Your Name]
-- **Project Repository**: [GitHub Link]
-- **Supabase Dashboard**: [Project Dashboard]
+- **Team Lead**: Piyush Kumar Pal
+- **Project Repository**: [[GitHub Link]](https://github.com/thepkp/authento/)
+- **Supabase Dashboard**: https://supabase.com/dashboard/project/mfgydvulxxqiocvzzevf
 
 ---
 
