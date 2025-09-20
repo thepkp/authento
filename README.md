@@ -1,89 +1,136 @@
-**AUTHENTO**: Authenticity Validator for Academia 🛡️
-AUTHENTO is a digital platform designed to combat the problem of fake academic degrees and certificates. It provides a secure, scalable, and intelligent system for employers, institutions, and government bodies to verify the authenticity of documents in real-time.
+AUTHENTO: Authenticity Validator for Academia 🛡️
+SIH Problem ID: 25029
 
-**Tech Stack 💻**
-Frontend: React (Vite), Tailwind CSS
-Backend: Supabase (PostgreSQL, Auth, Storage, Edge Functions)
-AI/OCR: Python, Tesseract / Google Vision API
-Blockchain: Solidity, Polygon (Mumbai Testnet), Ethers.js
-Chatbot: Dialogflow / Botpress
+A digital platform to combat the problem of fake academic degrees and certificates. It provides a secure and scalable system for employers, institutions, and government bodies to verify the authenticity of documents in real-time.
 
-**Core Project Workflow**
-Understanding how data flows through our system is crucial for integration. Here is the primary verification workflow:
-  Upload: An employer uploads a certificate image/PDF via the Frontend.
-  Store: The Frontend sends the file to the Backend, which saves it in Supabase Storage.
-  Extract: The Backend sends the file URL to the AI/OCR Service. The service processes it and returns structured JSON data (name, marks, etc.).
-  Compare: The Backend receives the OCR data and queries the Supabase Database for the trusted "golden record" of that certificate.
-  Verify: The Backend compares the OCR data with the database record. It can also call the Blockchain to verify the document's hash for an extra layer of security.
-  Respond: The Backend generates a final verdict (VALID, FORGERY_DETECTED, etc.) and sends it back to the Frontend.
+✨ Key Features
+OCR Data Extraction: Automatically pulls key details from uploaded documents.
 
-**Team Roles & Responsibilities 👥**
-1. Team Lead / Backend Integrator
-Work:
-Design and build the core backend using Supabase Edge Functions.
-Create RESTful APIs for user authentication, certificate uploads, and the verification engine.
-Integrate the outputs from the AI/OCR and Blockchain components into the main API response.
-Manage the GitHub repository, branching strategy, and deployment.
+Database Verification: Cross-references extracted data against a trusted database to flag mismatches.
 
-Getting Started:
-Finalize the database schema and RLS policies.
-Build the initial POST /api/verify and POST /api/certificates endpoints with mock data.
+Role-Based Access: Secure portals for Students, Employers, and Admins.
 
-2. **Frontend Developer (UI/UX)**
-Work:
-Develop the user-facing portals for Students, Employers, and Admins using React and Tailwind CSS.
-Implement user authentication flows (signup/login).
-Create clean, responsive forms for document uploads and display detailed verification results.
+Admin Dashboard: Monitor verification trends, view logs, and manage a blacklist of offenders.
 
-Getting Started:
+Blockchain Support: Optional hash verification for an added layer of security.
+
+💻 Tech Stack
+Frontend: ⚛️ React (Vite), Tailwind CSS
+
+Backend: 🌲 Supabase (PostgreSQL, Auth, Storage, Edge Functions)
+
+AI/OCR: 🐍 Python, Tesseract / Google Vision API
+
+Blockchain: ⛓️ Solidity, Polygon (Mumbai Testnet), Ethers.js
+
+Chatbot: 🤖 Dialogflow / Botpress
+
+🚀 Core Verification Workflow
+Upload: A user uploads a document via the React Frontend.
+
+Store & Extract: The Backend saves the file to Supabase Storage and triggers the AI/OCR service.
+
+Compare: The Backend receives the extracted JSON data and compares it against the trusted record in the database.
+
+Verify: The Backend (optionally) verifies the document's hash on the Blockchain.
+
+Respond: A final verdict (VALID, FORGERY_DETECTED, etc.) is generated and sent back to the Frontend for display.
+
+👥 Team Roles & Responsibilities
+👤 1. Team Lead / Backend Integrator
+Key Responsibilities:
+
+Design and build the core backend APIs using Supabase Edge Functions.
+
+Integrate outputs from the AI/OCR and Blockchain services.
+
+Manage the GitHub repository and deployment pipeline.
+
+First Steps:
+
+Finalize the database schema and Row Level Security (RLS) policies.
+
+Build the initial POST /api/verify and POST /api/certificates endpoints.
+
+🎨 2. Frontend Developer (UI/UX)
+Key Responsibilities:
+
+Develop portals for Students, Employers, and Admins.
+
+Implement authentication flows and forms for document uploads.
+
+Display detailed verification results in a clean, user-friendly way.
+
+First Steps:
+
 Create wireframes for all major screens in Figma.
-Set up the React project using Vite.
-Build the static UI components for the Login and Upload pages.
 
-3. **AI/OCR Specialist**
-Work:
-Build a Python script/service to extract key details (Name, Roll No, Marks, etc.) from certificate images and PDFs.
+Set up the React project with Vite and Tailwind CSS.
+
+Build the static UI for the Login and Upload pages.
+
+🧠 3. AI/OCR Specialist
+Key Responsibilities:
+
+Build a service to extract key details (Name, Roll No, etc.) from documents.
+
 Clean and structure the extracted data into a reliable JSON format.
-Implement rules to detect obvious tampering (e.g., mismatched fonts, formatting issues).
 
-Getting Started:
-Test OCR libraries (like Tesseract) on sample certificate images.
-Create a basic script that takes an image path and prints the extracted JSON.
-Work with the Backend Lead to finalize the JSON output format (see API Contracts).
+Implement rules to detect obvious tampering.
 
-4. **Blockchain Developer**
-Work:
-Write and deploy a Solidity smart contract to the Polygon Mumbai testnet for storing certificate hashes.
-Create functions in the contract to storeHash and verifyHash.
-Provide a library or module for the backend to interact with the smart contract using Ethers.js.
+First Steps:
 
-Getting Started:
-Set up a development wallet (e.g., MetaMask) and get testnet MATIC from a faucet.
-Write and deploy a simple "Hello World" contract to the testnet to confirm the setup.
-Design the storeHash function.
+Test OCR libraries (e.g., Tesseract) on sample documents.
 
-5. **Admin & Security Specialist**
-Work:
-Implement role-based access control (RBAC) across the platform using Supabase Auth and RLS policies.
-Build the Admin Dashboard UI to display analytics (e.g., verification stats), manage the user blacklist, and view logs.
-Ensure all APIs are secured and require proper authentication.
+Create a basic script that takes an image and outputs a JSON object.
 
-Getting Started:
-Configure Supabase Auth settings (email providers, templates).
-Write the initial SQL policies for the certificates table (e.g., "Students can only see their own certificates").
+Finalize the JSON output format with the Backend Lead (see API Contracts).
+
+🔗 4. Blockchain Developer
+Key Responsibilities:
+
+Write and deploy a Solidity smart contract for storing certificate hashes.
+
+Create storeHash and verifyHash functions in the contract.
+
+Provide a way for the backend to interact with the contract using Ethers.js.
+
+First Steps:
+
+Set up a development wallet and get testnet MATIC from a faucet.
+
+Deploy a simple test contract to the Polygon Mumbai testnet.
+
+🔒 5. Admin & Security Specialist
+Key Responsibilities:
+
+Implement Role-Based Access Control (RBAC) using Supabase Auth and RLS.
+
+Build the Admin Dashboard for analytics, blacklisting, and logs.
+
+Ensure all APIs are secure and require proper authentication.
+
+First Steps:
+
+Configure Supabase Auth settings (email providers, etc.).
+
+Write initial RLS policies for the certificates table.
+
 Design the layout for the Admin Dashboard.
 
-6. **Chatbot + Documentation & Demo Lead**
-Work:
-Build a simple, helpful chatbot to answer frequently asked questions.
-Write clear, user-friendly documentation for the project's features.
-Prepare the final presentation slides and a compelling demo script for the SIH evaluation.
+🤖 6. Chatbot + Documentation & Demo Lead
+Key Responsibilities:
 
-Getting Started:
+Build a chatbot to answer frequently asked questions.
+
+Write clear user guides and project documentation.
+
+Prepare the final SIH presentation and demo script.
+
+First Steps:
+
 Create a list of potential user FAQs.
-Sign up for a service like Dialogflow or Botpress and create a new agent.
-Draft the project's "Problem-Solution" slide for the final presentation.
 
+Sign up for a service like Dialogflow or Botpress.
 
-
-
+Draft the "Problem-Solution" slide for the final presentation.
