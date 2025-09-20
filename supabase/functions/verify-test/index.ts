@@ -1,5 +1,5 @@
-// AUTHENTO - Certificate Verification Engine
-// This endpoint receives OCR data and compares it against trusted records
+// AUTHENTO - Test Verify Endpoint (No Auth Required)
+// This is a test version that doesn't require authentication
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
@@ -30,17 +30,13 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { 
       headers: { 
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
         'Access-Control-Allow-Methods': 'POST, OPTIONS'
       }
     })
   }
 
-  // Rate limiting check
-  const clientIP = req.headers.get('x-forwarded-for') || 'unknown';
-  const rateLimitKey = `verify_${clientIP}`;
-  
   try {
     // Validate request method
     if (req.method !== 'POST') {
@@ -64,16 +60,11 @@ serve(async (req) => {
       });
     }
 
-    // Create Supabase client
+    // Create Supabase client with service role key for testing
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      { global: { headers: { Authorization: req.headers.get('Authorization')! } } }
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
-
-    // Get user info for logging
-    const { data: { user } } = await supabaseClient.auth.getUser();
-    const employerId = user?.id;
 
     // Find the certificate in the database using roll_number
     const { data: dbRecord, error: dbError } = await supabaseClient
@@ -83,24 +74,13 @@ serve(async (req) => {
       .single();
 
     if (dbError || !dbRecord) {
-      // Log failed verification attempt
-      if (employerId) {
-        await supabaseClient
-          .from('verificationlogs')
-          .insert({
-            employer_id: employerId,
-            certificate_id: null,
-            result: 'NOT_FOUND',
-            timestamp: new Date().toISOString()
-          });
-      }
-
       return new Response(JSON.stringify({ 
         verdict: 'NOT_FOUND', 
         message: `No certificate found with number: ${ocrData.roll_number}`,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        test_mode: true
       }), {
-        status: 404, 
+        status: 200, // Return 200 instead of 404 for testing
         headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
       });
     }
@@ -117,7 +97,7 @@ serve(async (req) => {
     if (expectedName === foundName) {
       comparisonDetails.push({ field: 'name', status: 'MATCH' });
       confidenceScore += 30;
-    } else if (foundName && expectedName.includes(foundName) || foundName.includes(expectedName)) {
+    } else if (foundName && (expectedName.includes(foundName) || foundName.includes(expectedName))) {
       comparisonDetails.push({ 
         field: 'name', 
         status: 'MISMATCH', 
@@ -142,7 +122,7 @@ serve(async (req) => {
     if (expectedMarks === foundMarks) {
       comparisonDetails.push({ field: 'marks', status: 'MATCH' });
       confidenceScore += 25;
-    } else if (foundMarks && expectedMarks.includes(foundMarks) || foundMarks.includes(expectedMarks)) {
+    } else if (foundMarks && (expectedMarks.includes(foundMarks) || foundMarks.includes(expectedMarks))) {
       comparisonDetails.push({ 
         field: 'marks', 
         status: 'MISMATCH', 
@@ -160,43 +140,6 @@ serve(async (req) => {
       });
     }
 
-    // Compare degree if available
-    if (ocrData.degree && dbRecord.degree) {
-      const expectedDegree = dbRecord.degree?.trim().toLowerCase() || '';
-      const foundDegree = ocrData.degree?.trim().toLowerCase() || '';
-      
-      if (expectedDegree === foundDegree) {
-        comparisonDetails.push({ field: 'degree', status: 'MATCH' });
-        confidenceScore += 20;
-      } else {
-        comparisonDetails.push({ 
-          field: 'degree', 
-          status: 'MISMATCH', 
-          expected: dbRecord.degree, 
-          found: ocrData.degree 
-        });
-        confidenceScore += 5; // Partial credit for having degree field
-      }
-    }
-
-    // Compare issue date if available
-    if (ocrData.issue_date && dbRecord.issue_date) {
-      const expectedDate = new Date(dbRecord.issue_date).toISOString().split('T')[0];
-      const foundDate = new Date(ocrData.issue_date).toISOString().split('T')[0];
-      
-      if (expectedDate === foundDate) {
-        comparisonDetails.push({ field: 'issue_date', status: 'MATCH' });
-        confidenceScore += 15;
-      } else {
-        comparisonDetails.push({ 
-          field: 'issue_date', 
-          status: 'MISMATCH', 
-          expected: dbRecord.issue_date, 
-          found: ocrData.issue_date 
-        });
-      }
-    }
-
     // Determine final verdict
     let finalVerdict: 'VALID' | 'MISMATCH_FOUND' | 'SUSPICIOUS';
     
@@ -208,28 +151,6 @@ serve(async (req) => {
       finalVerdict = 'MISMATCH_FOUND';
     }
 
-    // Update certificate verification_result
-    await supabaseClient
-      .from('certificates')
-      .update({ 
-        verification_result: finalVerdict === 'VALID' ? 'valid' : 
-                           finalVerdict === 'SUSPICIOUS' ? 'suspicious' : 'fake'
-      })
-      .eq('id', dbRecord.id);
-
-    // Log verification attempt
-    if (employerId) {
-      await supabaseClient
-        .from('verificationlogs')
-        .insert({
-          employer_id: employerId,
-          certificate_id: dbRecord.id,
-          result: finalVerdict === 'VALID' ? 'valid' : 
-                  finalVerdict === 'SUSPICIOUS' ? 'suspicious' : 'fake',
-          timestamp: new Date().toISOString()
-        });
-    }
-
     const result: VerificationResult = {
       verdict: finalVerdict,
       details: comparisonDetails,
@@ -238,7 +159,7 @@ serve(async (req) => {
     };
 
     return new Response(JSON.stringify(result), {
-      status: 200,
+      status: 200, 
       headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
     });
 
@@ -255,14 +176,3 @@ serve(async (req) => {
     });
   }
 })
-/* To invoke locally:
-
-  1. Run `supabase start` (see: https://supabase.com/docs/reference/cli/supabase-start)
-  2. Make an HTTP request:
-
-  curl -i --location --request POST 'http://127.0.0.1:54321/functions/v1/verify' \
-    --header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0' \
-    --header 'Content-Type: application/json' \
-    --data '{"name":"Functions"}'
-
-*/
