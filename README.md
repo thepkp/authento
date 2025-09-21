@@ -172,13 +172,6 @@ const response = await fetch('https://your-project.supabase.co/functions/v1/veri
 - **Functions**: Edge Functions deployed globally
 - **Domain**: Configure custom domain in Supabase
 
-### Environment Variables
-```env
-SUPABASE_URL=your_supabase_url
-SUPABASE_ANON_KEY=your_anon_key
-SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
-```
-
 ## 📊 Database Schema
 
 ### Users Table
