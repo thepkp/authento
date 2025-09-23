@@ -113,6 +113,7 @@ export class MemStorage implements IStorage {
     const user: User = { 
       ...insertUser, 
       id, 
+      role: insertUser.role || "employer",
       createdAt: new Date() 
     };
     this.users.set(id, user);
@@ -157,6 +158,11 @@ export class MemStorage implements IStorage {
     const log: VerificationLog = {
       ...insertLog,
       id,
+      userId: insertLog.userId || null,
+      certificateId: insertLog.certificateId || null,
+      imageUrl: insertLog.imageUrl || null,
+      ocrData: insertLog.ocrData || {},
+      verificationDetails: insertLog.verificationDetails || {},
       createdAt: new Date(),
     };
     this.verificationLogs.set(id, log);

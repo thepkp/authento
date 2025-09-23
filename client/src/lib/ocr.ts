@@ -43,16 +43,16 @@ export class OCRService {
       throw new Error('Failed to initialize OCR worker');
     }
 
-    const { data } = await this.worker.recognize(imageData, {}, {
-      logger: (m) => {
-        if (onProgress && m.status && typeof m.progress === 'number') {
-          onProgress({
-            status: m.status,
-            progress: m.progress
-          });
-        }
-      }
-    });
+    // Simulate progress for now
+    if (onProgress) {
+      onProgress({ status: 'recognizing text', progress: 50 });
+    }
+
+    const { data } = await this.worker.recognize(imageData);
+    
+    if (onProgress) {
+      onProgress({ status: 'processing complete', progress: 100 });
+    }
 
     // Extract structured data from OCR text
     const extractedData = this.extractCertificateData(data.text);
