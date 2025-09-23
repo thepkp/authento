@@ -1,12 +1,19 @@
+
+
 import { type User, type InsertUser, type Certificate, type InsertCertificate, type VerificationLog, type InsertVerificationLog, type Blacklist, users, certificates, verificationLogs, blacklist } from "@shared/schema";
-import { drizzle } from "drizzle-orm/neon-http";
-import { neon } from "@neondatabase/serverless";
+import { drizzle } from "drizzle-orm/node-postgres";
+import pg from "pg";
 import { eq, ilike, sql } from "drizzle-orm";
 import { randomUUID } from "crypto";
+const connectionString = process.env.DATABASE_URL as string;
+console.log('Database URL being used:', connectionString)
 
-const connectionString = process.env.DATABASE_URL!;
-const client = neon(connectionString);
-const db = drizzle(client);
+const { Pool } = pg;
+const pool = new Pool({
+  connectionString,
+  ssl: { rejectUnauthorized: false },
+});
+const db = drizzle(pool);
 
 export interface IStorage {
   // User operations

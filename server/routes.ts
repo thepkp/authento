@@ -26,6 +26,18 @@ const authenticateToken = (req: any, res: any, next: any) => {
   });
 };
 
+// Middleware to check user roles
+const authorizeRoles = (...allowedRoles: string[]) => {
+  return (req: any, res: any, next: any) => {
+    if (!req.user || !allowedRoles.includes(req.user.role)) {
+      return res.status(403).json({ 
+        message: 'Access denied - insufficient permissions' 
+      });
+    }
+    next();
+  };
+};
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Authentication routes
   app.post("/api/auth/login", async (req, res) => {
@@ -234,7 +246,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get all certificates (for admin/bulk operations)
-  app.get("/api/certificates", authenticateToken, async (req: any, res) => {
+  app.get("/api/certificates", authenticateToken, authorizeRoles("admin"), async (req: any, res) => {
     try {
       const certificates = await storage.getAllCertificates();
       res.json(certificates);
