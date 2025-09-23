@@ -221,7 +221,7 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 
 ## 📄 License
 
-This project is part of Smart India Hackathon 2024 (SIH ID 25029).
+This project is part of Smart India Hackathon 2025 (SIH ID 25029).
 
 ## 📞 Contact
 
