@@ -1,5 +1,12 @@
-import { type User, type InsertUser, type Certificate, type InsertCertificate, type VerificationLog, type InsertVerificationLog, type Blacklist } from "@shared/schema";
+import { type User, type InsertUser, type Certificate, type InsertCertificate, type VerificationLog, type InsertVerificationLog, type Blacklist, users, certificates, verificationLogs, blacklist } from "@shared/schema";
+import { drizzle } from "drizzle-orm/neon-http";
+import { neon } from "@neondatabase/serverless";
+import { eq, ilike, sql } from "drizzle-orm";
 import { randomUUID } from "crypto";
+
+const connectionString = process.env.DATABASE_URL!;
+const client = neon(connectionString);
+const db = drizzle(client);
 
 export interface IStorage {
   // User operations
@@ -28,178 +35,162 @@ export interface IStorage {
   getVerificationStats(userId: string): Promise<{ verified: number; pending: number; failed: number }>;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<string, User>;
-  private certificates: Map<string, Certificate>;
-  private verificationLogs: Map<string, VerificationLog>;
-  private blacklist: Map<string, Blacklist>;
-
+export class DatabaseStorage implements IStorage {
   constructor() {
-    this.users = new Map();
-    this.certificates = new Map();
-    this.verificationLogs = new Map();
-    this.blacklist = new Map();
-
-    // Initialize with sample data
+    // Initialize with sample data on first run
     this.initializeSampleData();
   }
 
-  private initializeSampleData() {
-    // Sample certificates
-    const sampleCerts: Certificate[] = [
-      {
-        id: "cert-1",
-        certificateId: "MIT-CS-2023-001247",
-        studentName: "John Smith",
-        institution: "MIT",
-        degree: "Computer Science",
-        year: "2023",
-        issuedDate: new Date("2023-06-15"),
-        isActive: true,
-        createdAt: new Date(),
-      },
-      {
-        id: "cert-2",
-        certificateId: "STANFORD-MBA-2023-002156",
-        studentName: "Sarah Johnson",
-        institution: "Stanford University",
-        degree: "MBA - Business Administration",
-        year: "2023",
-        issuedDate: new Date("2023-05-20"),
-        isActive: true,
-        createdAt: new Date(),
-      },
-      {
-        id: "cert-3",
-        certificateId: "BERKELEY-CS-2023-003087",
-        studentName: "Michael Chen",
-        institution: "UC Berkeley",
-        degree: "BS - Computer Science",
-        year: "2023",
-        issuedDate: new Date("2023-05-15"),
-        isActive: true,
-        createdAt: new Date(),
-      },
-      {
-        id: "cert-4",
-        certificateId: "GATECH-DS-2023-004123",
-        studentName: "David Rodriguez",
-        institution: "Georgia Tech",
-        degree: "MS - Data Science",
-        year: "2023",
-        issuedDate: new Date("2023-05-10"),
-        isActive: true,
-        createdAt: new Date(),
+  private async initializeSampleData() {
+    try {
+      // Check if certificates already exist
+      const existingCerts = await db.select().from(certificates).limit(1);
+      if (existingCerts.length > 0) {
+        return; // Data already exists
       }
-    ];
 
-    sampleCerts.forEach(cert => this.certificates.set(cert.id, cert));
+      // Sample certificates
+      const sampleCerts: InsertCertificate[] = [
+        {
+          certificateId: "MIT-CS-2023-001247",
+          studentName: "John Smith",
+          institution: "MIT",
+          degree: "Computer Science",
+          year: "2023",
+        },
+        {
+          certificateId: "STANFORD-MBA-2023-002156",
+          studentName: "Sarah Johnson",
+          institution: "Stanford University",
+          degree: "MBA - Business Administration",
+          year: "2023",
+        },
+        {
+          certificateId: "BERKELEY-CS-2023-003087",
+          studentName: "Michael Chen",
+          institution: "UC Berkeley",
+          degree: "BS - Computer Science",
+          year: "2023",
+        },
+        {
+          certificateId: "GATECH-DS-2023-004123",
+          studentName: "David Rodriguez",
+          institution: "Georgia Tech",
+          degree: "MS - Data Science",
+          year: "2023",
+        }
+      ];
+
+      await db.insert(certificates).values(sampleCerts);
+    } catch (error) {
+      console.log('Sample data already exists or error inserting:', error);
+    }
   }
 
   async getUser(id: string): Promise<User | undefined> {
-    return this.users.get(id);
+    const result = await db.select().from(users).where(eq(users.id, id)).limit(1);
+    return result[0];
   }
 
   async getUserByEmail(email: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(user => user.email === email);
+    const result = await db.select().from(users).where(eq(users.email, email)).limit(1);
+    return result[0];
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(user => user.username === username);
+    const result = await db.select().from(users).where(eq(users.username, username)).limit(1);
+    return result[0];
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const id = randomUUID();
-    const user: User = { 
-      ...insertUser, 
-      id, 
-      role: insertUser.role || "employer",
-      createdAt: new Date() 
-    };
-    this.users.set(id, user);
-    return user;
+    const result = await db.insert(users).values({
+      ...insertUser,
+      role: insertUser.role || "employer"
+    }).returning();
+    return result[0];
   }
 
   async getCertificate(id: string): Promise<Certificate | undefined> {
-    return this.certificates.get(id);
+    const result = await db.select().from(certificates).where(eq(certificates.id, id)).limit(1);
+    return result[0];
   }
 
   async getCertificateByStudentName(name: string): Promise<Certificate | undefined> {
-    return Array.from(this.certificates.values()).find(
-      cert => cert.studentName.toLowerCase().includes(name.toLowerCase())
-    );
+    const result = await db.select().from(certificates)
+      .where(ilike(certificates.studentName, `%${name}%`)).limit(1);
+    return result[0];
   }
 
   async getCertificateByCertificateId(certId: string): Promise<Certificate | undefined> {
-    return Array.from(this.certificates.values()).find(
-      cert => cert.certificateId === certId
-    );
+    const result = await db.select().from(certificates)
+      .where(eq(certificates.certificateId, certId)).limit(1);
+    return result[0];
   }
 
   async createCertificate(insertCertificate: InsertCertificate): Promise<Certificate> {
-    const id = randomUUID();
-    const certificate: Certificate = {
-      ...insertCertificate,
-      id,
-      issuedDate: new Date(),
-      isActive: true,
-      createdAt: new Date(),
-    };
-    this.certificates.set(id, certificate);
-    return certificate;
+    const result = await db.insert(certificates).values(insertCertificate).returning();
+    return result[0];
   }
 
   async getAllCertificates(): Promise<Certificate[]> {
-    return Array.from(this.certificates.values());
+    return await db.select().from(certificates);
   }
 
   async createVerificationLog(insertLog: InsertVerificationLog): Promise<VerificationLog> {
-    const id = randomUUID();
-    const log: VerificationLog = {
+    const result = await db.insert(verificationLogs).values({
       ...insertLog,
-      id,
       userId: insertLog.userId || null,
       certificateId: insertLog.certificateId || null,
       imageUrl: insertLog.imageUrl || null,
       ocrData: insertLog.ocrData || {},
       verificationDetails: insertLog.verificationDetails || {},
-      createdAt: new Date(),
-    };
-    this.verificationLogs.set(id, log);
-    return log;
+    }).returning();
+    return result[0];
   }
 
   async getVerificationLogsByUser(userId: string): Promise<VerificationLog[]> {
-    return Array.from(this.verificationLogs.values())
-      .filter(log => log.userId === userId)
-      .sort((a, b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0));
+    return await db.select().from(verificationLogs)
+      .where(eq(verificationLogs.userId, userId))
+      .orderBy(sql`created_at DESC`);
   }
 
   async getVerificationLog(id: string): Promise<VerificationLog | undefined> {
-    return this.verificationLogs.get(id);
+    const result = await db.select().from(verificationLogs)
+      .where(eq(verificationLogs.id, id)).limit(1);
+    return result[0];
   }
 
   async getBlacklistByCertificateId(certId: string): Promise<Blacklist | undefined> {
-    return Array.from(this.blacklist.values()).find(
-      item => item.certificateId === certId
-    );
+    const result = await db.select().from(blacklist)
+      .where(eq(blacklist.certificateId, certId)).limit(1);
+    return result[0];
   }
 
   async getBlacklistByStudentName(name: string): Promise<Blacklist | undefined> {
-    return Array.from(this.blacklist.values()).find(
-      item => item.studentName?.toLowerCase() === name.toLowerCase()
-    );
+    const result = await db.select().from(blacklist)
+      .where(ilike(blacklist.studentName, name)).limit(1);
+    return result[0];
   }
 
   async getVerificationStats(userId: string): Promise<{ verified: number; pending: number; failed: number }> {
-    const userLogs = await this.getVerificationLogsByUser(userId);
+    const [verifiedCount] = await db.select({ count: sql`count(*)` })
+      .from(verificationLogs)
+      .where(sql`${verificationLogs.userId} = ${userId} AND ${verificationLogs.status} = 'verified'`);
+    
+    const [pendingCount] = await db.select({ count: sql`count(*)` })
+      .from(verificationLogs)
+      .where(sql`${verificationLogs.userId} = ${userId} AND ${verificationLogs.status} = 'pending'`);
+    
+    const [failedCount] = await db.select({ count: sql`count(*)` })
+      .from(verificationLogs)
+      .where(sql`${verificationLogs.userId} = ${userId} AND ${verificationLogs.status} = 'failed'`);
     
     return {
-      verified: userLogs.filter(log => log.status === 'verified').length,
-      pending: userLogs.filter(log => log.status === 'pending').length,
-      failed: userLogs.filter(log => log.status === 'failed').length,
+      verified: Number(verifiedCount.count) || 0,
+      pending: Number(pendingCount.count) || 0,
+      failed: Number(failedCount.count) || 0,
     };
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
