@@ -9,6 +9,4 @@ yarn-debug.log*
 Thumbs.db
 .idea/
 /build
-.env
-.env.local
 
