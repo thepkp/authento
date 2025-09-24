@@ -25,7 +25,7 @@ Preferred communication style: Simple, everyday language.
 - **Development Setup**: Hot reloading with tsx and integrated Vite middleware for development
 
 ## Data Storage
-- **Primary Database**: PostgreSQL configured for use with Neon Database
+- **Primary Database**: PostgreSQL configured for use with supabase
 - **Schema Management**: Drizzle migrations stored in `/migrations` directory
 - **Database Tables**:
   - `users`: User management with role-based access (student, employer, admin)
@@ -50,7 +50,7 @@ Preferred communication style: Simple, everyday language.
 # External Dependencies
 
 ## Database Services
-- **Neon Database**: PostgreSQL hosting service for production database
+- **Supabase**: PostgreSQL hosting service for production database
 - **Drizzle ORM**: Database toolkit and ORM with PostgreSQL adapter
 
 ## UI Framework & Components
