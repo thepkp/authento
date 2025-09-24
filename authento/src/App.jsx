@@ -1,8 +1,9 @@
 import './App.css'
 import { useState, useEffect } from 'react'
 import { supabase } from './supabaseClient'
-import Auth from './Auth'
-import Account from './Account'
+import Login from './Login'
+import Register from './Register'
+import Dashboard from './Dashboard'
 
 function App() {
   const [session, setSession] = useState(null)
@@ -17,9 +18,15 @@ function App() {
     })
   }, [])
 
+  const [mode, setMode] = useState('login')
+
   return (
     <div className="container" style={{ padding: '50px 0 100px 0' }}>
-      {!session ? <Auth /> : <Account key={session.user.id} session={session} />}
+      {!session ? (
+        mode === 'login' ? <Login onSwitch={setMode} /> : <Register onSwitch={setMode} />
+      ) : (
+        <Dashboard key={session.user.id} session={session} />
+      )}
     </div>
   )
 }
